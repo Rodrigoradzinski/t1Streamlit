@@ -29,7 +29,7 @@ with tab1:
 with tab2:
     st.header("Análise de Gols por Copa")
     # Exemplo: Gráfico de barras dos gols totais por Copa
-    df_gols_por_copa = df.groupby('data_copa')['gols_do_time_da_casa', 'gols_do_time_da_fora'].sum().reset_index()
+    df_gols_por_copa = df.groupby('data_copa')[['gols_do_time_da_casa', 'gols_do_time_da_fora']].sum().reset_index()
     df_gols_por_copa['total_gols'] = df_gols_por_copa['gols_do_time_da_casa'] + df_gols_por_copa['gols_do_time_da_fora']
     fig_gols = px.bar(df_gols_por_copa, x='data_copa', y='total_gols', title="Gols Totais por Copa")
     st.plotly_chart(fig_gols)
