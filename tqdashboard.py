@@ -366,9 +366,9 @@ df_estatisticas['Gols Sofridos'] = df_estatisticas['Selecao'].apply(lambda x: df
 df_estatisticas['Diferenca Gols'] = df_estatisticas['Gols Marcados'] - df_estatisticas['Gols Sofridos']
 
 
-# Integração com o DataFrame de bandeiras
+
 df_estatisticas = df_estatisticas.merge(df_completo_links_bandeira, how='left', left_on='Selecao', right_on='Pais_name_iso')
-st.dataframe(df_estatisticas)
+#st.dataframe(df_estatisticas)
 
 # Ordenação e seleção das top 10 seleções para cada métrica
 top_10_vitorias = df_estatisticas.sort_values('Vitorias', ascending=False).head(10)
@@ -382,18 +382,18 @@ with tab3:
     st.header("Comparativo entre Seleções")
     st.write("Aqui podemos criar comparativos entre seleções que já disputaram copas.")
     
-    
+    # Escolha da métrica para comparação
     metrica_comparativa = st.selectbox('Escolha uma métrica para comparação:', 
                                        ['Vitórias', 'Participações em Copas do Mundo', 'Gols Marcados', 'Gols Sofridos', 'Diferença de Gols'])
     
-    
+    # Seleção do Brasil
     brasil_stats = df_estatisticas[df_estatisticas['Selecao'] == 'Brazil'].iloc[0]
  
-    
+    # Função para criar gráficos
     def criar_grafico(metrica, df_metrica):
         fig = go.Figure()
 
-    
+        # Função para gerar o hovertemplate dependendo da existência da URL da bandeira
         def hover_template(row):
             if pd.isna(row['Bandeira_URL']):
                 return f"<div style='width:40px; height:25px; background-color:white;'></div><br>{metrica}: {row[metrica]}<extra></extra>"
@@ -462,7 +462,7 @@ with tab4:
     st.header("Estatísticas de Gols")
     st.write("Análise de gols por Copa, média de gols por partida e comparação entre gols do time da casa e time visitante.")
     
-    
+    # Gráfico de barras dos gols totais por Copa
     df_gols_por_copa = df.groupby('Ano da Copa', as_index=False)[['Gols Time da Casa', 'Gols Time Visitante']].sum()
     df_gols_por_copa['total_gols'] = df_gols_por_copa['Gols Time da Casa'] + df_gols_por_copa['Gols Time Visitante']
     fig_gols = px.bar(df_gols_por_copa, x='Ano da Copa', y='total_gols', title="Gols Totais por Copa", labels={'total_gols': 'Total de Gols', 'Ano da Copa': 'Ano da Copa'})
