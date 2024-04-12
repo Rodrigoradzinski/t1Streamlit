@@ -477,7 +477,7 @@ top_10_gols_marcados = df_estatisticas.sort_values('Gols Marcados', ascending=Fa
 top_10_gols_sofridos = df_estatisticas.sort_values('Gols Sofridos', ascending=False).head(10)  
 top_10_diferenca_gols = df_estatisticas.sort_values('Diferenca Gols', ascending=False).head(10)
 
-   st.dataframe(df_filtrado)
+st.dataframe(df_filtrado)
 
 #========================================================================================================   
 # 
