@@ -368,8 +368,12 @@ with tab2:
         st.header(f"Resumo de Desempenho das Seleções Escolhidas")
         st.markdown("---")
 
+        
         prorrogacoes = df_filtrado[df_filtrado['Houve Prorrogação?'] == 1]
         penaltis = df_filtrado[df_filtrado['Houve Pênaltis?'] == 1]
+        
+        prorrogacoes_por_ano = prorrogacoes.groupby('Ano da Copa').size().reset_index(name='Partidas com Prorrogação')
+        penaltis_por_ano = penaltis.groupby('Ano da Copa').size().reset_index(name='Partidas com Penáltis')
 
         jogos_diferenca_gols = df_filtrado.nlargest(5, 'Diferença de Gols')
         vitorias_por_ano = df_filtrado[df_filtrado['Fase Alcançada'] == 'Vitória'].groupby('Ano da Copa').size().reset_index(name='Vitórias')
@@ -377,13 +381,14 @@ with tab2:
         gols_sofridos_por_ano = df_filtrado.groupby('Ano da Copa')['Gols Time Visitante'].sum().reset_index()
 
 
-      
-        fig_prorrogacoes = px.line(prorrogacoes, x='Ano da Copa', title='Partidas com Prorrogação por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
-        fig_penaltis = px.line(penaltis, x='Ano da Copa', title='Partidas Decididas por Pênaltis por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
+    
+        
+        fig_prorrogacoes = px.line(prorrogacoes_por_ano, x='Ano da Copa', y='Partidas com Prorrogação', title='Partidas com Prorrogação por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
+        fig_penaltis = px.line(penaltis_por_ano, x='Ano da Copa', title='Partidas Decididas por Pênaltis por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
         fig_gols_marcados = px.line(gols_marcados_por_ano, x='Ano da Copa', y='Gols Time da Casa', title='Gols Marcados por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
         fig_gols_sofridos = px.line(gols_sofridos_por_ano, x='Ano da Copa', y='Gols Time Visitante', title='Gols Sofridos por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
 
-        
+       
         fig_diferenca_gols = px.bar(jogos_diferenca_gols, x='Identificador do Jogo', y='Diferença de Gols', title='Jogos com Maior Diferença de Gols', color_discrete_sequence=cor_unica)
         fig_vitorias = px.bar(vitorias_por_ano, x='Ano da Copa', y='Vitórias', title='Vitórias por Ano', color_discrete_sequence=cor_unica)
        
@@ -414,6 +419,10 @@ with tab2:
         for col, (label, valor) in zip(colunas, metricas):
             with col:
                 metrica_personalizada(label, valor)
+
+        if st.checkbox('Mostrar Detalhes'):
+            st.dataframe(prorrogacoes)
+
 
         st.markdown('---', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
@@ -462,8 +471,6 @@ df_estatisticas['Diferenca Gols'] = df_estatisticas['Gols Marcados'] - df_estati
 
 df_estatisticas = df_estatisticas.merge(df_completo_links_bandeira, how='left', left_on='Selecao', right_on='Pais_name_iso')
 #st.dataframe(df_estatisticas)
-
-
 top_10_vitorias = df_estatisticas.sort_values('Vitorias', ascending=False).head(10)
 top_10_participacoes = df_estatisticas.sort_values('Participacoes', ascending=False).head(10)
 top_10_gols_marcados = df_estatisticas.sort_values('Gols Marcados', ascending=False).head(10)
@@ -490,39 +497,37 @@ with tab3:
     def criar_grafico(metrica, df_metrica):
         fig = go.Figure()
 
-        
-        def hover_template(row, metrica):
-                if pd.isna(row['Bandeira_URL']) or row['Bandeira_URL'] == '':
-                    return f"<div style='width:40px; height:25px; background-color:white;'></div><br>{metrica}: {row[metrica]}<extra></extra>"
-                else:
-                    return f"<img src='{row['Bandeira_URL']}' style='width:25px; height:20px;'><br>{metrica}: {row[metrica]}<extra></extra>"
-
+        # Dados do Brasil como uma linha de base para comparação
+        brasil_stats = df_metrica[df_metrica['Selecao'] == 'Brazil'].iloc[0]
+        df_metrica = df_metrica[df_metrica['Selecao'] != 'Brazil'] 
         fig.add_trace(go.Bar(
-                x=[brasil_stats[metrica]],
-                y=['Brasil'],
-                name='Brasil',
-                marker=dict(color='#8366CF'),
-                orientation='h',
-                width=0.8, 
-                hovertemplate=hover_template(brasil_stats, metrica),
-            ))
+            x=[brasil_stats[metrica]],
+            y=['Brasil'],
+            name='Brasil',
+            marker=dict(color='#8366CF'),
+            orientation='h',
+            width=0.8,
+            hovertemplate="Seleção: %{y}<br>Métrica: %{x}<extra></extra>",
 
+
+
+        ))
         for _, row in df_metrica.iterrows():
             fig.add_trace(go.Bar(
                 x=[row[metrica]],
                 y=[row['Selecao']],
                 name=row['Selecao'],
                 marker=dict(color='#3F3163'),
-                width=0.9, 
+                width=0.9,
                 orientation='h',
-                hovertemplate=hover_template(row, metrica),
+                hovertemplate="Seleção: %{y}<br>Métrica: %{x}<extra></extra>",
+
             ))
 
-        
         fig.update_layout(
-                        title=f'Comparação de {metrica.replace("_", " ")}',
+            title=f'Comparação de {metrica.replace("_", " ")}',
             barmode='overlay',
-            yaxis={'categoryorder':'total ascending'},
+            yaxis={'categoryorder': 'total ascending'},
             xaxis_title=metrica.replace("_", " "),
             yaxis_title="Seleções",
             hovermode="y",
@@ -530,9 +535,9 @@ with tab3:
         )
         fig = configurar_layout(fig)
         fig.update_traces(hoverinfo='none')
-        st.plotly_chart(fig, use_container_width=True)       
+        st.plotly_chart(fig, use_container_width=True)
         fig = configurar_layout(fig) 
- 
+    
 
 
     if metrica_comparativa == 'Vitórias':
@@ -574,12 +579,3 @@ with tab5:
 # Rodapé
 st.markdown("---")
 st.markdown("Desenvolvido por Equipe: Cleyton Rodrigo e Douglas ®")
-
-
-
-            
-#Número de Vitórias: Compare o total de vitórias de uma seleção específica com as seleções que têm o maior número de vitórias na história das Copas.
-#articipações em Copas do Mundo: Compare o número de vezes que a seleção foi qualificada para a Copa do Mundo
-#Gols Marcados: Compare os gols marcados pela seleção escolhida com o time que mais marcou gols na história das Copas.
-#Gols Sofridos: Compare os gols sofridos pela seleção escolhida com o time que menos sofreu gols (uma medida de defesa forte).
-#Diferença de Gols: Compare a diferença de gols (gols marcados - gols sofridos) com as melhores diferenças na história das Copas.
