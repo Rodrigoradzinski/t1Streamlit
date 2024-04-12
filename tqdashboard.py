@@ -398,7 +398,7 @@ with tab2:
         fig_diferenca_gols = configurar_layout (fig_diferenca_gols)
         fig_vitorias = configurar_layout (fig_vitorias)
 
-        st.dataframe(df_filtrado)
+        t.dataframe(df_filtrado)
         
 #========================================================================================================   
 # 
