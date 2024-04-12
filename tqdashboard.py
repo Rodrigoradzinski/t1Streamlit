@@ -233,6 +233,7 @@ def metrica_personalizada(titulo, valor):
 
 tab1, tab2, tab3, tab4 ,tab5= st.tabs(["Resumo das Copas","Desempenho dos Países", "Comparativo entre Seleções",  "Estatísticas de Gols","Análise de Partidas"])
 with tab1:
+        
     st.header("Visão Geral das Copas do Mundo")
     st.write("Explore os dados gerais das Copas, incluindo os países anfitriões, os vencedores de cada edição e o número de times participantes.")
     st.markdown("---")
@@ -256,7 +257,8 @@ with tab1:
         metrica_personalizada("Total de  Participantes", total_times)      
 
     st.markdown("---")
-    
+    if st.checkbox('Mostrar Detalhes df'):
+           st.dataframe(df)
     #st.dataframe(df_geo[['country','latitude','longitude','name']])
     #st.dataframe(df[['País-Sede','Campeão da Copa']])
     
