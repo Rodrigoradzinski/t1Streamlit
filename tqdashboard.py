@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import pydeck as pdk
-
+from plotly.subplots import make_subplots
 
 df = pd.read_csv('https://raw.githubusercontent.com/Rodrigoradzinski/Projeto-de-Circuitos-Digitais-Laborat-rio-e-Simula-o-IA--Predict_Match_World_Cups_2022-/main/WordCup_history_machs.csv')
 st.set_page_config(layout='wide')
@@ -100,7 +100,7 @@ vitorias_mundiais = [
 ] + [0] * (len(Pais_name_iso) - 8)
 
 
-bandeira_url = [
+Bandeira_URL = [
     'https://static.significados.com.br/foto/brasil-6f.jpg',
     'https://static.significados.com.br/foto/alemanha.jpg',
     'https://static.significados.com.br/foto/bandeira-italia-0-cke.jpg',
@@ -116,18 +116,92 @@ df_completo_links_bandeira = pd.DataFrame({
     'Pais_name_iso': Pais_name_iso,
     'País': Nome_em_Portugues,  
     'Vitórias': vitorias_mundiais,
-    'Bandeira_URL': bandeira_url
+    'Bandeira_URL': Bandeira_URL
 })
 #E
 df_vitorias = df_completo_links_bandeira[df_completo_links_bandeira['Vitórias'] > 0].reset_index(drop=True)
 cores_gradiente = ['#3F3163', '#3F3163', '#8366CF']
-
+cor_unica = ['#8e7cc3']
 
 
 
 #========================================================================================================   
 # funcoes
 #========================================================================================================
+def criar_cabecalho_cartao(titulo):
+    st.markdown(f"""
+        <div style="
+            border-radius: 8px 8px 0 0;
+            background-color: #333333;
+            padding: 10px;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 10px;
+            ">
+            {titulo}
+        </div>
+        """, unsafe_allow_html=True)
+    
+
+def configurar_layout(fig):
+    fig.update_layout(
+        title={
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        title_font=dict(size=27),
+        xaxis=dict(
+            title_font=dict(size=18),  
+            tickfont=dict(size=14),  
+            tickangle=45,  
+        ),
+        yaxis=dict(
+            title_font=dict(size=18), 
+            tickfont=dict(size=14),  
+             gridcolor='rgba(150,150,150,0.3)',  
+        ),
+        
+        margin=dict(l=40, r=40, t=40, b=40),
+        plot_bgcolor='rgba(0,0,0,0.0)',
+        paper_bgcolor='rgba(0,0,0,0.3)',
+        
+        # Configurações da legenda
+        legend=dict(
+            title_font=dict(size=16), 
+            font=dict(size=14),  
+            bgcolor='rgba(0,0,0,0)',  
+            bordercolor='rgba(100,100,100,0)',  
+        ),
+        
+        
+        hoverlabel=dict(
+            font_size=16, 
+        ),
+    )
+    
+    st.markdown(
+        """
+        <style>
+        .js-plotly-plot .plotly {
+            border-radius: 25px;  
+            overflow: hidden;    
+           
+        }
+        .main .block-container {
+        background-color: transparent !importante; 
+        }
+        </style>
+        """
+        , unsafe_allow_html=True
+    )
+
+    return fig
+
+
+
 def calcular_fase(row):
         if row['Vitória da Casa?'] == 1 or row['Vitória Visitante?'] == 1:
             return 'Vitória'
@@ -187,18 +261,12 @@ with tab1:
     #st.dataframe(df_geo[['country','latitude','longitude','name']])
     #st.dataframe(df[['País-Sede','Campeão da Copa']])
     
-    
     contagem_sedes = df.groupby('País-Sede')['Ano da Copa'].nunique().reset_index(name='Contagem de Sedes')
     uniao_df_df_geo = pd.merge(df_geo, contagem_sedes, left_on='name', right_on='País-Sede', how='left')
-
     uniao_df_df_geo['Contagem de Sedes'] = uniao_df_df_geo['Contagem de Sedes'].fillna(0)
-
     sedes_copa = uniao_df_df_geo[uniao_df_df_geo['Contagem de Sedes'] > 0]
     sedes_copa.loc[:, 'size'] = sedes_copa['Contagem de Sedes'] * 100000
     sedes_copa.loc[:, 'color'] = sedes_copa['Contagem de Sedes'].apply(mapear_para_cor)
-    
-   
-   
     num_colunas = len(df_vitorias['País'])  
     cols = st.columns(num_colunas)
 
@@ -213,8 +281,7 @@ with tab1:
                 """, unsafe_allow_html=True)
 
     st.markdown("---")
-    
-    mapa1=st.map(data=sedes_copa, latitude='latitude', longitude='longitude', color='color', size='size')
+    mapa1= st.map(data=sedes_copa, latitude='latitude', longitude='longitude', color='color', size='size')
     
 #========================================================================================================   
 # graico de linha numero de países participantes ao longo dos anos
@@ -231,7 +298,8 @@ with tab1:
                         )
 
     fig_participantes.update_layout(title_x=0.5, title_text='Número de Países Participantes')
-
+    fig_participantes = configurar_layout(fig_participantes)
+    
 
 #========================================================================================================   
 # graico de número de gols por Copa
@@ -246,18 +314,19 @@ with tab1:
                         color='Total Gols',  
                         color_continuous_scale=cores_gradiente  
                     )
-    fig_gols.update_layout(title_x=0.5, title_text='Número de Gols por Copa')
-
     
+    fig_gols = configurar_layout(fig_gols)
+
+
+
+
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_participantes, use_container_width=True)
     with col2:
-        st.plotly_chart(fig_gols, use_container_width=True)
         
-
+        st.plotly_chart(fig_gols, use_container_width=True)
     #st.dataframe(df[['Ano da Copa', 'País-Sede', 'Campeão da Copa', 'Total de Times']].drop_duplicates())
-   
 #========================================================================================================   
 # gNova aba
 #========================================================================================================
@@ -302,19 +371,37 @@ with tab2:
         prorrogacoes = df_filtrado[df_filtrado['Houve Prorrogação?'] == 1]
         penaltis = df_filtrado[df_filtrado['Houve Pênaltis?'] == 1]
 
-        fig_prorrogacoes = px.line(prorrogacoes, x='Ano da Copa', title='Partidas com Prorrogação por Ano')
-        fig_penaltis = px.line(penaltis, x='Ano da Copa', title='Partidas Decididas por Pênaltis por Ano')
         jogos_diferenca_gols = df_filtrado.nlargest(5, 'Diferença de Gols')
-        fig_diferenca_gols = px.bar(jogos_diferenca_gols, x='Identificador do Jogo', y='Diferença de Gols', title='Jogos com Maior Diferença de Gols')
         vitorias_por_ano = df_filtrado[df_filtrado['Fase Alcançada'] == 'Vitória'].groupby('Ano da Copa').size().reset_index(name='Vitórias')
         gols_marcados_por_ano = df_filtrado.groupby('Ano da Copa')['Gols Time da Casa'].sum().reset_index()
         gols_sofridos_por_ano = df_filtrado.groupby('Ano da Copa')['Gols Time Visitante'].sum().reset_index()
 
-        fig_vitorias = px.bar(vitorias_por_ano, x='Ano da Copa', y='Vitórias', title='Vitórias por Ano')
-        fig_gols_marcados = px.line(gols_marcados_por_ano, x='Ano da Copa', y='Gols Time da Casa', title='Gols Marcados por Ano')
-        fig_gols_sofridos = px.line(gols_sofridos_por_ano, x='Ano da Copa', y='Gols Time Visitante', title='Gols Sofridos por Ano')
+
+      
+        fig_prorrogacoes = px.line(prorrogacoes, x='Ano da Copa', title='Partidas com Prorrogação por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
+        fig_penaltis = px.line(penaltis, x='Ano da Copa', title='Partidas Decididas por Pênaltis por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
+        fig_gols_marcados = px.line(gols_marcados_por_ano, x='Ano da Copa', y='Gols Time da Casa', title='Gols Marcados por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
+        fig_gols_sofridos = px.line(gols_sofridos_por_ano, x='Ano da Copa', y='Gols Time Visitante', title='Gols Sofridos por Ano', line_shape='linear', color_discrete_sequence=cor_unica)
+
+        
+        fig_diferenca_gols = px.bar(jogos_diferenca_gols, x='Identificador do Jogo', y='Diferença de Gols', title='Jogos com Maior Diferença de Gols', color_discrete_sequence=cor_unica)
+        fig_vitorias = px.bar(vitorias_por_ano, x='Ano da Copa', y='Vitórias', title='Vitórias por Ano', color_discrete_sequence=cor_unica)
+       
+        fig_prorrogacoes = configurar_layout (fig_prorrogacoes)
+        fig_penaltis = configurar_layout (fig_penaltis)
+        fig_gols_marcados = configurar_layout (fig_gols_marcados)
+        fig_gols_sofridos = configurar_layout (fig_gols_sofridos)
+        fig_diferenca_gols = configurar_layout (fig_diferenca_gols)
+        fig_vitorias = configurar_layout (fig_vitorias)
+
+        
+#========================================================================================================   
+# 
+#========================================================================================================
 
 
+
+        
         colunas = st.columns(6)
         metricas = [
             ("Vitórias", (df_filtrado['Fase Alcançada'] == 'Vitória').sum()),
@@ -328,14 +415,18 @@ with tab2:
             with col:
                 metrica_personalizada(label, valor)
 
-
+        st.markdown('---', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         col1.plotly_chart(fig_vitorias, use_container_width=True)
         col2.plotly_chart(fig_gols_marcados, use_container_width=True)
 
+        st.markdown('---', unsafe_allow_html=True)
+
         col3, col4 = st.columns(2)
         col3.plotly_chart(fig_gols_sofridos, use_container_width=True)
         col4.plotly_chart(fig_prorrogacoes, use_container_width=True)
+
+        st.markdown('---', unsafe_allow_html=True)
 
         col5, col6 = st.columns(2)
         col5.plotly_chart(fig_penaltis, use_container_width=True)
@@ -345,7 +436,9 @@ with tab2:
 
        
       
-
+#========================================================================================================   
+# graico de linha numero de países participantes ao longo dos anos
+#========================================================================================================
 
 
 if 'Vencedor' not in df.columns:
@@ -370,76 +463,78 @@ df_estatisticas['Diferenca Gols'] = df_estatisticas['Gols Marcados'] - df_estati
 df_estatisticas = df_estatisticas.merge(df_completo_links_bandeira, how='left', left_on='Selecao', right_on='Pais_name_iso')
 #st.dataframe(df_estatisticas)
 
-# Ordenação e seleção das top 10 seleções para cada métrica
+
 top_10_vitorias = df_estatisticas.sort_values('Vitorias', ascending=False).head(10)
 top_10_participacoes = df_estatisticas.sort_values('Participacoes', ascending=False).head(10)
 top_10_gols_marcados = df_estatisticas.sort_values('Gols Marcados', ascending=False).head(10)
 top_10_gols_sofridos = df_estatisticas.sort_values('Gols Sofridos', ascending=False).head(10)  
 top_10_diferenca_gols = df_estatisticas.sort_values('Diferenca Gols', ascending=False).head(10)
 
+
+
+#========================================================================================================   
+# 
+#========================================================================================================
+
+
+
 with tab3:
    
     st.header("Comparativo entre Seleções")
     st.write("Aqui podemos criar comparativos entre seleções que já disputaram copas.")
-    
-    # Escolha da métrica para comparação
     metrica_comparativa = st.selectbox('Escolha uma métrica para comparação:', 
                                        ['Vitórias', 'Participações em Copas do Mundo', 'Gols Marcados', 'Gols Sofridos', 'Diferença de Gols'])
     
-    # Seleção do Brasil
     brasil_stats = df_estatisticas[df_estatisticas['Selecao'] == 'Brazil'].iloc[0]
  
-    # Função para criar gráficos
     def criar_grafico(metrica, df_metrica):
         fig = go.Figure()
 
-        # Função para gerar o hovertemplate dependendo da existência da URL da bandeira
-        def hover_template(row):
-            if pd.isna(row['Bandeira_URL']):
-                return f"<div style='width:40px; height:25px; background-color:white;'></div><br>{metrica}: {row[metrica]}<extra></extra>"
-            else:
-                return f"<img src='{row['Bandeira_URL']}' width='40' height='25'><br>{metrica}: {row[metrica]}<extra></extra>"
+        
+        def hover_template(row, metrica):
+                if pd.isna(row['Bandeira_URL']) or row['Bandeira_URL'] == '':
+                    return f"<div style='width:40px; height:25px; background-color:white;'></div><br>{metrica}: {row[metrica]}<extra></extra>"
+                else:
+                    return f"<img src='{row['Bandeira_URL']}' style='width:25px; height:20px;'><br>{metrica}: {row[metrica]}<extra></extra>"
 
-    # Adiciona o Brasil com sua bandeira ou um quadrado branco se não houver bandeira
         fig.add_trace(go.Bar(
-            x=[brasil_stats[metrica]],
-            y=['Brasil'],
-            name='Brasil',
-            marker=dict(color='#8366CF'), #cores_gradiente = ['#3F3163', '#3F3163', '#8366CF']
-            orientation='h',
-             width=0.8, 
-            hovertemplate=hover_template(brasil_stats),
-        ))
+                x=[brasil_stats[metrica]],
+                y=['Brasil'],
+                name='Brasil',
+                marker=dict(color='#8366CF'),
+                orientation='h',
+                width=0.8, 
+                hovertemplate=hover_template(brasil_stats, metrica),
+            ))
 
-        # Adiciona as outras seleções com suas bandeiras ou um quadrado branco se não houver bandeira
         for _, row in df_metrica.iterrows():
-            if row['Selecao'] != 'Brazil':  # Certifique-se de não adicionar o Brasil novamente
-                fig.add_trace(go.Bar(
-                    x=[row[metrica]],
-                    y=[row['Selecao']],
-                    name=row['Selecao'],
-                    marker=dict(color='#3F3163'),
-                    width=0.9, 
-                    orientation='h',
-                    hovertemplate=hover_template(row),
-                ))
+            fig.add_trace(go.Bar(
+                x=[row[metrica]],
+                y=[row['Selecao']],
+                name=row['Selecao'],
+                marker=dict(color='#3F3163'),
+                width=0.9, 
+                orientation='h',
+                hovertemplate=hover_template(row, metrica),
+            ))
 
-        # Configurações adicionais do gráfico
+        
         fig.update_layout(
-            title=f'Comparação de {metrica.replace("_", " ")}',
+                        title=f'Comparação de {metrica.replace("_", " ")}',
             barmode='overlay',
             yaxis={'categoryorder':'total ascending'},
             xaxis_title=metrica.replace("_", " "),
             yaxis_title="Seleções",
             hovermode="y",
+            height=800,
         )
-        
-        # Remove informações adicionais do hover
+        fig = configurar_layout(fig)
         fig.update_traces(hoverinfo='none')
-        
         st.plotly_chart(fig, use_container_width=True)       
+        fig = configurar_layout(fig) 
+ 
 
-    
+
     if metrica_comparativa == 'Vitórias':
         criar_grafico('Vitorias', top_10_vitorias)
     elif metrica_comparativa == 'Participações em Copas do Mundo':
@@ -451,39 +546,34 @@ with tab3:
     elif metrica_comparativa == 'Diferença de Gols':
         criar_grafico('Diferenca Gols', top_10_diferenca_gols)
         
-     
-#Número de Vitórias: Compare o total de vitórias de uma seleção específica com as seleções que têm o maior número de vitórias na história das Copas.
-#articipações em Copas do Mundo: Compare o número de vezes que a seleção foi qualificada para a Copa do Mundo
-#Gols Marcados: Compare os gols marcados pela seleção escolhida com o time que mais marcou gols na história das Copas.
-#Gols Sofridos: Compare os gols sofridos pela seleção escolhida com o time que menos sofreu gols (uma medida de defesa forte).
-#Diferença de Gols: Compare a diferença de gols (gols marcados - gols sofridos) com as melhores diferenças na história das Copas.
 
 with tab4:
     st.header("Estatísticas de Gols")
     st.write("Análise de gols por Copa, média de gols por partida e comparação entre gols do time da casa e time visitante.")
-    
-    # Gráfico de barras dos gols totais por Copa
     df_gols_por_copa = df.groupby('Ano da Copa', as_index=False)[['Gols Time da Casa', 'Gols Time Visitante']].sum()
     df_gols_por_copa['total_gols'] = df_gols_por_copa['Gols Time da Casa'] + df_gols_por_copa['Gols Time Visitante']
     fig_gols = px.bar(df_gols_por_copa, x='Ano da Copa', y='total_gols', title="Gols Totais por Copa", labels={'total_gols': 'Total de Gols', 'Ano da Copa': 'Ano da Copa'})
+    fig_gols = configurar_layout (fig_gols)
     st.plotly_chart(fig_gols, use_container_width=True)
+    st.dataframe(df_gols_por_copa)
 
 with tab5:
     st.header("Análise Detalhada de Partidas")
     st.write("Detalhe das partidas, incluindo jogos com maior número de gols, partidas que foram para prorrogação e pênaltis, e jogos com maior diferença de gols.")
-     # Gráfico de Barras - Gols por Partida
     df['Total Gols por Partida'] = df['Gols Time da Casa'] + df['Gols Time Visitante']
     fig_gols_partida = px.histogram(df, x='Total Gols por Partida', nbins=20, title="Distribuição de Gols por Partida")
+    fig_gols_partida = configurar_layout (fig_gols_partida)
     st.plotly_chart(fig_gols_partida, use_container_width=True)
     
-    # Gráfico de Linhas - Partidas com Prorrogação e Pênaltis por Copa
     df_prorrogacao_penaltis = df.groupby('Ano da Copa').agg({'Houve Prorrogação?':'sum', 'Houve Pênaltis?':'sum'}).reset_index()
     fig_prorrogacao_penaltis = px.line(df_prorrogacao_penaltis, x='Ano da Copa', y=['Houve Prorrogação?', 'Houve Pênaltis?'], title="Partidas com Prorrogação e Pênaltis por Copa")
+    fig_prorrogacao_penaltis = configurar_layout (fig_prorrogacao_penaltis)
     st.plotly_chart(fig_prorrogacao_penaltis, use_container_width=True)
+    st.dataframe(df_prorrogacao_penaltis)
     
 # Rodapé
 st.markdown("---")
-st.markdown("Desenvolvido por Equipe: Cleyton Rodrigo e Douglas.")
+st.markdown("Desenvolvido por Equipe: Cleyton Rodrigo e Douglas ®")
 
 
 
