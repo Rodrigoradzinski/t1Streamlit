@@ -326,8 +326,7 @@ with tab1:
     with col2:
         
         st.plotly_chart(fig_gols, use_container_width=True)
-    if st.checkbox('Mostrar Detalhes df'):
-          st.dataframe(df)
+   
     #st.dataframe(df[['Ano da Copa', 'País-Sede', 'Campeão da Copa', 'Total de Times']].drop_duplicates())
 #========================================================================================================   
 # gNova aba
