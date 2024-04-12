@@ -232,7 +232,6 @@ def metrica_personalizada(titulo, valor):
 
 
 tab1, tab2, tab3, tab4 ,tab5= st.tabs(["Resumo das Copas","Desempenho dos Países", "Comparativo entre Seleções",  "Estatísticas de Gols","Análise de Partidas"])
-
 with tab1:
     st.header("Visão Geral das Copas do Mundo")
     st.write("Explore os dados gerais das Copas, incluindo os países anfitriões, os vencedores de cada edição e o número de times participantes.")
@@ -496,22 +495,20 @@ with tab3:
  
     def criar_grafico(metrica, df_metrica):
         fig = go.Figure()
+        if 'Brazil' in df_metrica['Selecao'].values:
+            brasil_stats = df_metrica[df_metrica['Selecao'] == 'Brazil'].iloc[0]
+            df_metrica = df_metrica[df_metrica['Selecao'] != 'Brazil'] 
+            fig.add_trace(go.Bar(
+                x=[brasil_stats[metrica]],
+                y=['Brasil'],
+                name='Brasil',
+                marker=dict(color='#8366CF'),
+                orientation='h',
+                width=0.8,
+                hovertemplate="Seleção: %{y}<br>Métrica: %{x}<extra></extra>",
+            ))
 
-        # Dados do Brasil como uma linha de base para comparação
-        brasil_stats = df_metrica[df_metrica['Selecao'] == 'Brazil'].iloc[0]
-        df_metrica = df_metrica[df_metrica['Selecao'] != 'Brazil'] 
-        fig.add_trace(go.Bar(
-            x=[brasil_stats[metrica]],
-            y=['Brasil'],
-            name='Brasil',
-            marker=dict(color='#8366CF'),
-            orientation='h',
-            width=0.8,
-            hovertemplate="Seleção: %{y}<br>Métrica: %{x}<extra></extra>",
-
-
-
-        ))
+        df_metrica = df_metrica.sort_values(by=metrica, ascending=False)
         for _, row in df_metrica.iterrows():
             fig.add_trace(go.Bar(
                 x=[row[metrica]],
@@ -521,13 +518,12 @@ with tab3:
                 width=0.9,
                 orientation='h',
                 hovertemplate="Seleção: %{y}<br>Métrica: %{x}<extra></extra>",
-
             ))
 
         fig.update_layout(
             title=f'Comparação de {metrica.replace("_", " ")}',
             barmode='overlay',
-            yaxis={'categoryorder': 'total ascending'},
+            yaxis=dict(categoryorder='total ascending'),
             xaxis_title=metrica.replace("_", " "),
             yaxis_title="Seleções",
             hovermode="y",
