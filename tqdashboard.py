@@ -233,7 +233,41 @@ def metrica_personalizada(titulo, valor):
 
 tab1, tab2, tab3, tab4 ,tab5= st.tabs(["Resumo das Copas","Desempenho dos Países", "Comparativo entre Seleções",  "Estatísticas de Gols","Análise de Partidas"])
 with tab1:
-        
+    st.markdown("""
+    <style>
+        .tabela-equipe {
+            font-family: Arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .tabela-equipe td, .tabela-equipe th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        .tabela-equipe tr:nth-child(even) {
+           
+        }
+    </style>
+    <table class="tabela-equipe">
+        <tr>
+            <th>Nome</th>
+            <th>Turma</th>
+        </tr>
+        <tr>
+            <td>Profa. Marjorie</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Cleyton Rodrigo Radzinski</td>
+            <td>9ºP</td>
+        </tr>
+        <tr>
+            <td>Douglas Mariano Santa Rosa</td>
+            <td>9ºP</td>
+        </tr>
+    </table>
+""", unsafe_allow_html=True)
     st.header("Visão Geral das Copas do Mundo")
     st.write("Explore os dados gerais das Copas, incluindo os países anfitriões, os vencedores de cada edição e o número de times participantes.")
     st.markdown("---")
